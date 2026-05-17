@@ -1,0 +1,27 @@
+# Maven / Java
+target/
+*.class
+*.jar
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+# Playwright / Node
+node_modules/
+playwright-report/
+test-results/
+.playwright/
+
+# Environment
+.env
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
