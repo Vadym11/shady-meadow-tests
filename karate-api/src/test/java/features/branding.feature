@@ -5,7 +5,6 @@ Feature: Shadow Meadows Branding
     * def expectedName = "Shady Meadows B&B"
     * def emailValidator = read("classpath:helpers/emailValidator.js")
 
-  @smoke  
   Scenario: get all branding and then get the first branding by id
     Given path 'branding'
     * def addressSchema = {"county": "#string", "line1": "#string", "line2": "##string", "postCode": "#string", "postTown": "#string"}
