@@ -6,6 +6,7 @@ function fn() {
   }
   var config = {
     env: env,
+    baseApiUrl: 'https://automationintesting.online/api',
     myVarName: 'someValue'
   }
   if (env == 'dev') {
