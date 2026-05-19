@@ -30,6 +30,12 @@ Run all tests from the `karate-api/` directory:
 mvn test
 ```
 
+Run only tagged tests if needed:
+
+```bash
+mvn test -Dkarate.options="--tags @tagme"
+```
+
 Run a specific feature:
 
 ```bash
@@ -81,6 +87,12 @@ npx playwright test tests/homepage.spec.ts
 npx playwright test tests/admin.spec.ts
 ```
 
+Run test in a specific browser:
+
+```bash
+npx playwright test tests --project=chromium
+```
+
 Run in headed mode (visible browser):
 
 ```bash
@@ -115,22 +127,22 @@ Three feature files cover the required microservices:
 
 - **branding.feature** — validates the `GET /api/branding` response, asserting the B&B name is exactly `"Shady Meadows B&B"` and the contact email matches a valid email regex. A reusable `emailValidator.js` helper is used for the email assertion.
 - **rooms.feature** — validates the `GET /api/room` response, asserting the response contains an array of rooms with at least one room with a `roomPrice` greater than 0.
-- **booking.feature** — validates the full booking flow: calls `GET /api/room` with checkin and checkout date parameters to retrieve rooms available for those dates, selects the first room from the response, and creates a booking via `POST /api/booking`. Date generation is handled by a reusable `dates.js` helper, ensuring checkout is always after checkin.
+- **booking.feature** — validates the full booking flow: calls `GET /api/room` with checkin and checkout date parameters to retrieve rooms available for those dates, selects the first room from the response, and creates a booking via `POST /api/booking`. Date generation is handled by a reusable `dates.js` helper, ensuring checkout is always after checkin and both are in the future.
 
-Dynamic data (room IDs, dates) is handled via Karate's built-in JavaScript support rather than hardcoded values.
+Dates are generated using a reusable JS helper, and the room ID is retrieved dynamically from the GET /api/room response to avoid hardcoding.
 
 ### UI Testing (Playwright)
 
 Two test files cover the required user journeys:
 
 - **homepage.spec.ts** — navigates to the homepage, asserts the contact form fields are visible using `data-testid` attributes, and verifies "Book now" buttons are present in the rooms section.
-- **admin.spec.ts** — logs in via the admin portal, asserts the redirect and Logout button visibility, and (bonus) cross-references room details from the public homepage against the admin Rooms panel.
+- **admin.spec.ts** — logs in via the admin portal, asserts the redirect and Logout button visibility, and compares room details from the public homepage against the admin Rooms panel.
 
-A `loginAsAdmin` helper function is used to avoid duplication across tests. Admin credentials are read from environment variables with a fallback to defaults.
+A `loginAsAdmin` helper function is used to avoid code duplication across tests. Admin credentials are read from environment variables with a fallback to defaults.
 
 #### A note on selectors
 
-User-facing locators (`getByRole`, `getByLabel`, `getByText`, `getByTestId`) are used throughout. The one exception is the admin Rooms panel, where CSS attribute selectors (`[id^="type"]`, `[id^="roomPrice"]`, `[id^="details"]`) were necessary — the room listing elements have no accessible names or ARIA roles that would allow semantic targeting. This is itself a testability issue worth noting: adding `aria-label` or `data-testid` attributes to those elements would make them more robust to test against.
+User-facing locators (`getByRole`, `getByLabel`, `getByText`, `getByTestId`) are used throughout. The exception is the admin Rooms panel, where CSS attribute selectors (`[id^="type"]`, `[id^="roomPrice"]`, `[id^="details"]`) were necessary — the room listing elements have no accessible names or ARIA roles that would allow semantic targeting. This is itself a testability issue worth noting: adding `aria-label` or `data-testid` attributes to those elements would make them more robust to test against.
 
 ---
 
@@ -140,28 +152,27 @@ User-facing locators (`getByRole`, `getByLabel`, `getByText`, `getByTestId`) are
 After login, the admin portal redirects to `https://automationintesting.online/admin/rooms` rather than a Dashboard or Inboxes view as described in the brief. This may indicate the brief is outdated or the dashboard feature is not yet implemented. The test asserting the expected redirect (`/dashboard/inboxes`) is skipped, with a passing test added that asserts the actual behaviour (`/admin/rooms`).
 
 ### 2. Contact form missing accessible name
-The contact `<form>` element does not have an `aria-label` or `aria-labelledby` attribute. This means screen reader users cannot identify the form by its role when navigating by landmarks. Recommended fix:
+The contact `<form>` element does not have an `aria-label` attribute. Suggested improvement to make the element more accessible and testable:
 ```html
 <form aria-label="Contact Form">
 ```
 
 ### 3. "Book this room" button label mismatch
-The task brief refers to "Book this room" buttons on the homepage, but the actual button label in the UI is "Book now". The test asserting `"Book this room"` is skipped, with a passing test added that asserts the actual label `"Book now"`.
+The task refers to "Book this room" buttons on the homepage, but the actual button label in the UI is "Book now". The test asserting `"Book this room"` is skipped, with a passing test added that asserts the actual label `"Book now"`.
 
 ### 4. Admin room listing elements are poorly designed for testability
 The room listing rows in the admin panel use dynamically constructed `id` attributes (e.g. `id="typeSingle"`, `id="roomPrice100"`) that embed the value into the identifier. These elements have no `data-testid` attributes or ARIA roles, making semantic targeting impossible and forcing the use of CSS attribute selectors (`[id^="type"]`, `[id^="roomPrice"]`). Adding `data-testid` attributes would significantly improve testability and maintainability.
 
 ### 5. Booking conflict error message could be more descriptive
-When a booking is attempted for dates that overlap or are identical to an existing booking for the same room, the API correctly returns a `409 Conflict` status. However, the response body provides no actionable detail:
+When a booking is attempted for dates that overlap or are identical to an existing booking for the same room, the API correctly returns a `409 Conflict` status. However, the response body provides no actionable or meaningful detail:
 ```json
 {
     "error": "Failed to create booking"
 }
 ```
-This is a recommendation rather than a defect — the error message would be more useful if it indicated the reason for the conflict, such as the conflicting date range or the affected room ID.
 
 ### 6. `depositpaid` field is not required for booking creation
-The `POST /api/booking` endpoint accepts and processes booking requests without the `depositpaid` field, despite it being documented as part of the booking payload. This could lead to bookings being created with an undefined deposit status.
+The `POST /api/booking` endpoint accepts and processes booking requests without the `depositpaid` field, despite it being worded as required in the booking payload.
 
 ### 7. Booking endpoint accepts non-existent room IDs
 The `POST /api/booking` endpoint accepts `roomid` values that are not returned by the `GET /api/room` endpoint. A booking created with a non-existent room ID should be rejected with an appropriate error response rather than accepted.
@@ -170,65 +181,28 @@ The `POST /api/booking` endpoint accepts `roomid` values that are not returned b
 
 ## CI/CD Integration
 
-Both test suites can be integrated into a CI/CD pipeline (e.g. GitHub Actions) with minimal configuration.
+Both test suites can serve as quality gates in a CI/CD pipeline. The following describes how they would fit into a typical workflow.
 
-A typical pipeline would:
-1. Trigger on pull requests and pushes to `main`
-2. Run Karate tests in the `karate-api/` directory via `mvn test`
-3. Run Playwright tests in the `playwright-ui/` directory via `npx playwright test`
-4. Upload HTML reports as build artifacts for review
+### When tests run
 
-Example GitHub Actions workflow:
+The pipeline triggers on every pull request and/or push to `main`. After successful unit tests run, both test suites run against a dedicated test environment — a deployed test instance of an application.
 
-```yaml
-name: Test Suite
+Karate API tests run first: they are fast, lightweight, and don't require a browser. Only if they pass do the Playwright UI tests run, avoiding wasting time running browser tests in case underlying API layer is broken.
 
-on: [push, pull_request]
+A failing test from any suit would blocks a PR from being merged. Reports are uploaded as pipeline artifacts on every run, including failures, so the initial investigation of a failure is possible without needing to re-run locally.
 
-jobs:
-  karate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Run Karate tests
-        working-directory: karate-api
-        run: mvn test
-      - name: Upload Karate report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: karate-report
-          path: karate-api/target/karate-reports/
+In case of successful run both reports also uploaded as artifacts -> PR may be approved -> staging/production deployment.
 
-  playwright:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      - name: Install dependencies
-        working-directory: playwright-ui
-        run: npm install
-      - name: Install browsers
-        working-directory: playwright-ui
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests
-        working-directory: playwright-ui
-        run: npx playwright test
-        env:
-          ADMIN_USER: ${{ secrets.ADMIN_USER }}
-          ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-ui/playwright-report/
-```
+### Credentials and environment configuration
 
-Admin credentials are stored as GitHub Actions secrets and injected as environment variables at runtime, keeping sensitive data out of the codebase.
+Sensitive data (admin credentials, environment URLs) should be stored as CI secrets and injected as environment variables at runtime. The `ADMIN_USER` and `ADMIN_PASS` variables are read from the environment in the Playwright tests, falling back to defaults for local runs. The Karate `baseApiUrl` is configured via `karate-config.js`.
+
+### Concurrency and caching
+
+To avoid wasted CI minutes, in-progress runs on the same branch may be cancelled automatically when a new commit is pushed. Maven dependencies and Playwright browser binaries are cached between runs, keyed by `pom.xml` and Playwright version respectively, so only real dependency changes trigger re-downloads.
+
+### Reporting
+
+HTML reports are uploaded as pipeline artifacts after every run:
+- Karate: `karate-api/target/karate-reports/karate-summary.html`
+- Playwright: `playwright-ui/playwright-report/index.html`
