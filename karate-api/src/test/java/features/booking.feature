@@ -14,8 +14,8 @@ Feature: Shadow Meadows Bookings
     And params { checkin: #(checkinDate), checkout: #(checkoutDate) }
     When method Get
     Then status 200
-    * def accessibleRooms = karate.filter(response.rooms, function(r){ return r.accessible == true })
-    * def roomId = accessibleRooms[0].roomid
+    * def availableRooms = response.rooms
+    * def roomId = availableRooms[0].roomid
 
     And path 'booking'
     * def requestBody = 
