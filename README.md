@@ -177,6 +177,9 @@ The `POST /api/booking` endpoint accepts and processes booking requests without 
 ### 7. Booking endpoint accepts non-existent room IDs
 The `POST /api/booking` endpoint accepts `roomid` values that are not returned by the `GET /api/room` endpoint. A booking created with a non-existent room ID should be rejected with an appropriate error response rather than accepted.
 
+### 8. Endpoints do not follow REST naming conventions
+Both `GET /api/room` and `POST /api/booking` use singular nouns. REST convention dictates that collection endpoints should use plural nouns — `GET /api/rooms` and `POST /api/bookings` would be the correct forms.
+
 ---
 
 ## CI/CD Integration
