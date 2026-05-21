@@ -2,7 +2,7 @@ package features;
 
 import com.intuit.karate.junit5.Karate;
 
-class RoomsRunner {
+class RoomsTest {
     
     @Karate.Test
     Karate testRooms() {
