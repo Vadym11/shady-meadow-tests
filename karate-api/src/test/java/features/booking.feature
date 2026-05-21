@@ -15,6 +15,7 @@ Feature: Shadow Meadows Bookings
     When method Get
     Then status 200
     * def availableRooms = response.rooms
+    Then match availableRooms == "#[_ > 0]"
     * def roomId = availableRooms[0].roomid
 
     And path 'booking'

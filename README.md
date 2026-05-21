@@ -52,6 +52,12 @@ After a test run, open the HTML report in your browser:
 karate-api/target/karate-reports/karate-summary.html
 ```
 
+Additionally, the cucumber report is also available - open in your browser:
+
+```
+karate-api/target/cucumber-html-reports/overview-features.html
+```
+
 The report includes per-feature pass/fail status, request/response logs, and scenario timings.
 
 ---
