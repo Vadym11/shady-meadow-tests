@@ -90,7 +90,7 @@ Run a specific file:
 
 ```bash
 npx playwright test tests/homepage.spec.ts
-npx playwright test tests/admin.spec.ts
+npx playwright test tests/dashboard.spec.ts
 ```
 
 Run test in a specific browser:
