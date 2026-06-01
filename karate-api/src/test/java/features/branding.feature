@@ -1,4 +1,4 @@
-Feature: Shadow Meadows Branding
+Feature: Shady Meadows Branding
 
   Background:
     * url baseApiUrl

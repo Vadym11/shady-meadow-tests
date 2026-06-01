@@ -1,4 +1,4 @@
-Feature: Shadow Meadows Bookings
+Feature: Shady Meadows Bookings
 
   Background:
     * url baseApiUrl
