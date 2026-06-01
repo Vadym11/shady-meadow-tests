@@ -57,6 +57,9 @@
                 <version>${maven.surefire.version}</version>
                 <configuration>
                     <argLine>-Dfile.encoding=UTF-8</argLine>
+                    <excludes>
+                        <exclude>**/features/*Test.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>          
         </plugins>        

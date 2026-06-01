@@ -38,6 +38,7 @@ jobs:
 
   playwright:
     runs-on: ubuntu-latest
+    needs: karate
     steps:
       - uses: actions/checkout@v4
 
