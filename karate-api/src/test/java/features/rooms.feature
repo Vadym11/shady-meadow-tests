@@ -10,4 +10,4 @@ Feature: Shadow Meadows Rooms
     Then status 200
     And match response.rooms == "#[]"
     And match each response.rooms == "#object"
-    And match response.rooms[*].roomPrice contains "#? _ >= 0"
+    And match response.rooms[*].roomPrice contains "#? _ <= 0"
