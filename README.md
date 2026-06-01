@@ -133,9 +133,11 @@ Three feature files cover the required microservices:
 
 - **branding.feature** — validates the `GET /api/branding` response, asserting the B&B name is exactly `"Shady Meadows B&B"` and the contact email matches a valid email regex. A reusable `emailValidator.js` helper is used for the email assertion.
 - **rooms.feature** — validates the `GET /api/room` response, asserting the response contains an array of rooms with at least one room with a `roomPrice` greater than 0.
-- **booking.feature** — validates the full booking flow: calls `GET /api/room` with checkin and checkout date parameters to retrieve rooms available for those dates, selects the first room from the response, and creates a booking via `POST /api/booking`. Date generation is handled by a reusable `dates.js` helper, ensuring checkout is always after checkin and both are in the future.
+- **booking.feature** — validates the full booking flow: retrieves available rooms for the target dates by calling a reusable helper feature (`get-available-rooms.feature`), selects the first available room ID from the response, and creates a booking via `POST /api/booking`.
 
-Dates are generated using a reusable JS helper, and the room ID is retrieved dynamically from the GET /api/room response to avoid hardcoding.
+Date generation is handled by a reusable `dates.js` helper, ensuring checkin is always in the future and checkout is always after checkin. The room ID is retrieved dynamically by calling the helper feature rather than hardcoded, keeping the test independent from data resets.
+
+The room retrieval logic is extracted into `helpers/get-available-rooms.feature` — a reusable called feature that accepts date parameters and returns the available rooms array.
 
 ### UI Testing (Playwright)
 
@@ -196,9 +198,9 @@ Both test suites can serve as quality gates in a CI/CD pipeline. The following d
 
 The pipeline triggers on every pull request and/or push to `main`. After successful unit tests run, both test suites run against a dedicated test environment — a deployed test instance of an application.
 
-Karate API tests run first: they are fast, lightweight, and don't require a browser. Only if they pass do the Playwright UI tests run, avoiding wasting time running browser tests in case underlying API layer is broken.
+Karate API tests run first: they are fast, lightweight, and don't require a browser. Only if they pass the Playwright UI tests run, avoiding spending time running browser tests in case the API layer is broken.
 
-A failing test from any suit would blocks a PR from being merged. Reports are uploaded as pipeline artifacts on every run, including failures, so the initial investigation of a failure is possible without needing to re-run locally.
+A failing test from any suite blocks a PR from being merged. Reports are uploaded as pipeline artifacts on every run, including failures, so the initial investigation of a failure is possible without needing to re-run locally.
 
 In case of successful run both reports also uploaded as artifacts -> PR may be approved -> staging/production deployment.
 
@@ -208,7 +210,7 @@ Sensitive data (admin credentials, environment URLs) should be stored as CI secr
 
 ### Concurrency and caching
 
-To avoid wasted CI minutes, in-progress runs on the same branch may be cancelled automatically when a new commit is pushed. Maven dependencies and Playwright browser binaries are cached between runs, keyed by `pom.xml` and Playwright version respectively, so only real dependency changes trigger re-downloads.
+To avoid wasted CI minutes, in-progress runs on the same branch are cancelled automatically when a new commit is pushed. Maven dependencies and Playwright browser binaries are cached between runs, keyed by `pom.xml` and Playwright version respectively, so only real dependency changes trigger re-downloads.
 
 ### Reporting
 
