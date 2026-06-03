@@ -188,6 +188,23 @@ The `POST /api/booking` endpoint accepts `roomid` values that are not returned b
 ### 8. Endpoints do not follow REST naming conventions
 Both `GET /api/room` and `POST /api/booking` use singular nouns. REST convention dictates that collection endpoints should use plural nouns — `GET /api/rooms` and `POST /api/bookings` would be the correct forms.
 
+### 9. `roomid` in request body instead of URL path
+`POST /api/booking` requires `roomid` in the request body rather than URL. REST convention for creating a sub-resource would be `POST /api/rooms/1/bookings`, with the room ID expressed as a path parameter. 
+
+### 10. API accepts unknown fields without rejection
+`POST /api/booking` silently accepts unknown fields in the request body without returning a `400 Bad Request` with meaningful error message.
+
+### 11. `depositpaid` is client-controlled
+The `POST /api/booking` endpoint allows the client to assert `"depositpaid": true` directly in the request body without any payment verification.
+
+### 12. Field names do not follow camelCase convention
+JSON REST API convention is camelCase for field names. The booking payload uses all-lowercase field names — `firstname`, `lastname`, `depositpaid`, `roomid` — instead of `firstName`, `lastName`, `depositPaid`, `roomId`.
+
+### 13. API does not enforce strict type validation on input fields
+The `POST /api/booking` endpoint accepts multiple types for multiple fields without returning a `400 Bad Request`:
+- `roomid` accepts both integer `1` and string `"1"` — should only accept integer
+- `depositpaid` accepts both boolean `true/false` and string `"true"/"false"` — should only accept boolean
+
 ---
 
 ## CI/CD Integration
